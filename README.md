@@ -50,13 +50,14 @@ Threshold Classifier → Sleep State Label
 
 ```
 .
-├── simulation.py       # Entry point — launches the real-time simulator
+├── README.md
 ├── acquisition.py      # Data provider — downloads and loads PhysioNet EDF files
-├── processing.py       # EEGProcessor class — filtering, artifact detection, band power
-├── update.py           # Animation loop — updates the EEG plot and state display
+├── mlm.py              # ML model - returns better suited values for better state detection
 ├── print_subject.py    # Diagnostic viewer — offline plot with expert annotations
+├── processing.py       # EEGProcessor class — filtering, artifact detection, band power
 ├── requirements.txt
-└── README.md
+├── simulation.py       # Entry point — launches the real-time simulator
+└── update.py           # Animation loop — updates the EEG plot and state display
 ```
 
 ---
