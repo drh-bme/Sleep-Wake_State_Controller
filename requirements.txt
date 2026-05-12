@@ -1,0 +1,15 @@
+- Python 3.10+
+- See `requirements.txt`
+
+# Core scientific stack
+numpy>=1.24
+scipy>=1.11
+
+# EEG data handling and PhysioNet dataset access
+mne>=1.12
+
+# Visualization and real-time animation
+matplotlib>=3.8
+
+# Machine learning (for future sleep stage classifier)
+scikit-learn>=1.4
