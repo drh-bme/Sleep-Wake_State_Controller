@@ -5,15 +5,21 @@ from matplotlib.widgets import Slider
 from acquisition import get_data_stream
 from processing import EEGProcessor
 from print_subject import get_subject_data
+from mlm import train_classifier 
 import update
 
-# --- State ---
-ID = 0
+# --- Subject ---
+ID = 10 
+
+# --- Train ML Classifier ---
+print("=== Training classifier... ===")
+model, labels = train_classifier(n_subjects=5, verbose=True)
+print("=== Classifier trained. Starting simulation... ===")
 
 # --- Launch Comparison Window ---
 get_subject_data(ID)
 
-# --- Setup Real-Time Window ---
+# --- Setup Real-Time Simulation Window ---
 raw, _ = get_data_stream(ID)
 fs = int(raw.info['sfreq'])
 proc = EEGProcessor(fs)
@@ -27,7 +33,11 @@ ax_eeg.set_xlabel("Time (s)")
 ax_eeg.set_ylabel("Amplitude (V)")
 ax_eeg.set_title("EEG - Real-Time View")
 
-bars = ax_bars.bar(['Delta', 'Alpha'], [0, 0], color=['#34495e', '#f39c12'])
+bars = ax_bars.bar(
+    ['Delta', 'Theta', 'Alpha', 'Beta'],
+    [0, 0, 0, 0],
+    color=['#2ecc71', '#f1c40f', '#e67e22', '#9b59b6']
+)
 ax_bars.set_ylim(0, 1)
 ax_bars.set_ylabel("Relative Power")
 ax_bars.set_title("Band Power")
@@ -35,16 +45,17 @@ ax_bars.set_title("Band Power")
 status_text = fig.suptitle("Controller Active", fontsize=14, fontweight='bold')
 
 # Initialize the update module
-update.init_params(raw, proc, line, bars, status_text, ax_eeg)
+update.init_params(raw, proc, line, bars, status_text, ax_eeg,
+                   model = model, labels =  labels)
 
 # --- Sliders ---
-sld_speed = plt.axes([0.15, 0.10, 0.3, 0.03])
-sld_start = plt.axes([0.15, 0.05, 0.3, 0.03])
+ax_speed = plt.axes([0.15, 0.10, 0.3, 0.03])
+ax_start = plt.axes([0.15, 0.05, 0.3, 0.03])
 
 total_duration = raw.n_times / fs
 
-slider_speed = Slider(sld_speed, 'Speed', 0.25, 4.0, valinit=1.0, valstep=0.25)
-slider_start = Slider(sld_start, 'Start (s)', 0.0, total_duration - 120, valinit=0.0, valstep=1.0)
+slider_speed = Slider(ax_speed, 'Speed', 0.25, 4.0, valinit=1.0, valstep=0.25)
+slider_start = Slider(ax_start, 'Start (s)', 0.0, total_duration - 120, valinit=0.0, valstep=1.0)
 
 # --- Speed control state ---
 # The interval (timer tick rate) stays fixed; only how far we jump each tick changes.
@@ -56,8 +67,7 @@ def on_speed_change(val):
 def on_start_change(val):
     # Reset the internal frame counter to match the new start position
     state['frame_idx'] = int(slider_start.val * fs)
-    update.START_TIME_SEC = slider_start.val
-
+    
 slider_speed.on_changed(on_speed_change)
 slider_start.on_changed(on_start_change)
 
@@ -77,8 +87,6 @@ def animate(_counter):
     return update.update_eeg(state['frame_idx'], fs)
 
 # --- Animation Loop ---
-# frames=itertools.count() gives an infinite counter — the actual position
-# is managed by state['frame_idx'] inside animate(), not by FuncAnimation.
 ani = FuncAnimation(
     fig,
     animate,
